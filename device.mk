@@ -362,6 +362,10 @@ PRODUCT_PACKAGES += \
     init.recovery.qcom.rc \
     ueventd.qcom.rc
 
+# Remove unwanted packages
+PRODUCT_PACKAGES += \
+    RemovePackages
+
 # Recovery
 PRODUCT_PACKAGES += \
     librecovery_updater_xiaomi
