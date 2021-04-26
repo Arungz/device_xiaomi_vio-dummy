@@ -54,9 +54,9 @@ public class DeviceSettings extends PreferenceFragment implements
     public static final String PREF_HEADSET = "dirac_headset_pref";
     public static final String PREF_PRESET = "dirac_preset_pref";
     public static final String PREF_KEY_FPS_INFO = "fps_info";
-    private static final String SELINUX_CATEGORY = "selinux";
-    private static final String PREF_SELINUX_MODE = "selinux_mode";
-    private static final String PREF_SELINUX_PERSISTENCE = "selinux_persistence";
+
+    public static final String KEY_CHARGING_SWITCH = "smart_charging";
+    public static final String KEY_RESET_STATS = "reset_stats";
 
     private static final String PREF_CLEAR_SPEAKER = "clear_speaker_settings";
 
@@ -75,6 +75,17 @@ public class DeviceSettings extends PreferenceFragment implements
     private SwitchPreference mSelinuxPersistence;
     private Preference mClearSpeakerPref;
     private Preference mAmbientPref;
+      "spmi/spmi-0/spmi0-05/c440000.qcom,spmi:qcom,pm6150l@5:qcom,leds@d300/leds/led:torch_1/max_brightness";
+
+    private Preference mKcal;
+    private SecureSettingSwitchPreference mFastcharge;
+      "spmi/spmi-0/spmi0-05/c440000.qcom,spmi:qcom,pm6150l@5:qcom,leds@d300/leds/led:torch_1/max_brightness";
+
+    private Preference mKcal;
+    private SecureSettingSwitchPreference mFastcharge;
+    private static TwoStatePreference mSmartChargingSwitch;
+    public static TwoStatePreference mResetStats;
+    public static SeekBarPreference mSeekBarPreference;
     private CustomSeekBarPreference mTorchBrightness;
     private SecureSettingSwitchPreference mEnableDirac;
     private SecureSettingListPreference mHeadsetType;
@@ -169,6 +180,17 @@ public class DeviceSettings extends PreferenceFragment implements
             mVibratorStrength.setEnabled(VibratorStrengthPreference.isSupported());
         }
 
+        mSmartChargingSwitch = (TwoStatePreference) findPreference(KEY_CHARGING_SWITCH);
+        mSmartChargingSwitch.setChecked(prefs.getBoolean(KEY_CHARGING_SWITCH, false));
+        mSmartChargingSwitch.setOnPreferenceChangeListener(new SmartChargingSwitch(getContext()));
+
+        mResetStats = (TwoStatePreference) findPreference(KEY_RESET_STATS);
+        mResetStats.setChecked(prefs.getBoolean(KEY_RESET_STATS, false));
+        mResetStats.setEnabled(mSmartChargingSwitch.isChecked());
+        mResetStats.setOnPreferenceChangeListener(this);
+
+        mSeekBarPreference = (SeekBarPreference) findPreference("seek_bar");
+        mSeekBarPreference.setEnabled(mSmartChargingSwitch.isChecked());
     }
 
 
@@ -176,17 +198,6 @@ public class DeviceSettings extends PreferenceFragment implements
     public boolean onPreferenceChange(Preference preference, Object value) {
         final String key = preference.getKey();
         switch (key) {
-            case PREF_SELINUX_MODE:
-                  if (preference == mSelinuxMode) {
-                  boolean enabled = (Boolean) value;
-                  new SwitchSelinuxTask(getActivity()).execute(enabled);
-                  setSelinuxEnabled(enabled, mSelinuxPersistence.isChecked());
-                  return true;
-                } else if (preference == mSelinuxPersistence) {
-                  setSelinuxEnabled(mSelinuxMode.isChecked(), (Boolean) value);
-                  return true;
-                }
-                break;
 
 	    case PREF_ENABLE_DIRAC:
                 try {
@@ -214,7 +225,7 @@ public class DeviceSettings extends PreferenceFragment implements
                     DiracService.sDiracUtils.setLevel(String.valueOf(value));
                 }
                 break;
-                
+
             case PREF_KEY_FPS_INFO:
                 boolean enabled = (Boolean) value;
                 Intent fpsinfo = new Intent(this.getContext(), FPSInfoService.class);
@@ -235,45 +246,6 @@ public class DeviceSettings extends PreferenceFragment implements
         }
         return true;
     }
-
-        private void setSelinuxEnabled(boolean status, boolean persistent) {
-          SharedPreferences.Editor editor = getContext()
-              .getSharedPreferences("selinux_pref", Context.MODE_PRIVATE).edit();
-          if (persistent) {
-            editor.putBoolean(PREF_SELINUX_MODE, status);
-          } else {
-            editor.remove(PREF_SELINUX_MODE);
-          }
-          editor.apply();
-          mSelinuxMode.setChecked(status);
-        }
-
-        private class SwitchSelinuxTask extends SuTask<Boolean> {
-          public SwitchSelinuxTask(Context context) {
-            super(context);
-          }
-          @Override
-          protected void sudoInBackground(Boolean... params) throws SuShell.SuDeniedException {
-            if (params.length != 1) {
-              Log.e(TAG, "SwitchSelinuxTask: invalid params count");
-              return;
-            }
-            if (params[0]) {
-              SuShell.runWithSuCheck("setenforce 1");
-            } else {
-              SuShell.runWithSuCheck("setenforce 0");
-            }
-          }
-
-          @Override
-          protected void onPostExecute(Boolean result) {
-            super.onPostExecute(result);
-            if (!result) {
-              // Did not work, so restore actual value
-              setSelinuxEnabled(SELinux.isSELinuxEnforced(), mSelinuxPersistence.isChecked());
-            }
-          }
-        }
 
     private boolean isAppNotInstalled(String uri) {
         PackageManager packageManager = getContext().getPackageManager();
