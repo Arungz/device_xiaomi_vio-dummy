@@ -5,9 +5,9 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/arrow_violet.mk
+    $(LOCAL_DIR)/lineage_violet.mk
 
 COMMON_LUNCH_CHOICES := \
-    arrow_violet-userdebug \
-    arrow_violet-user \
-	arrow_violet-eng
+    lineage_violet-userdebug \
+    lineage_violet-user \
+    lineage_violet-eng
