@@ -6,9 +6,9 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/aosip_violet.mk
+    $(LOCAL_DIR)/fluid_violet.mk
 
 COMMON_LUNCH_CHOICES := \
-    aosip_violet-userdebug \
-    aosip_violet-user \
-    aosip_violet-eng
+    fluid_violet-userdebug \
+    fluid_violet-user \
+    fluid_violet-eng
